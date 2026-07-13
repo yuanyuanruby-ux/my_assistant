@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ruby Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#09090B; --frame:#121215; --card:#1A1A1E; --recess:#17171B; --sheet:#1C1C21;
+  --seg-track:#1C1C20; --seg-on:#3A3A42;
+  --bdr:#26262B; --bdr-card:#2A2A30; --rule:#222227; --row:#1B1B1F; --outline:#33333A;
+  --t1:#F2F2F5; --t2:#E4E4E9; --t3:#C4C4CC; --mut:#8E8E96; --faint:#6C6C74; --ghost:#44444B;
+  --accent:#FF5C8A; --on-accent:#141115;
+  --amber:#E0A85C; --red:#E07A7A; --green:#A9C3A2; --green-dk:#2E3B2E;
+  --c-personal:#E8A0B8; --c-leilah:#A9C3A2; --c-jibboco:#D9B36A; --c-harland:#8FB6DE;
+  --serif:'Newsreader',serif;
+  --sans:-apple-system,BlinkMacSystemFont,'Helvetica Neue',system-ui,'PingFang TC','Noto Sans TC',sans-serif;
+  --mono:ui-monospace,Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--page);font-family:var(--sans);color:var(--t2);font-size:13px;line-height:1.55;min-height:100vh}
+.frame{max-width:520px;margin:0 auto;background:var(--frame);min-height:100vh;padding:22px 18px 96px;position:relative}
+
+/* type helpers */
+.mono{font-family:var(--mono)}
+.kick{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#7A7A82}
+.title{font-family:var(--serif);font-weight:500;font-size:34px;color:var(--t1);line-height:1.1;margin-top:2px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.d-personal{background:var(--c-personal)} .d-leilah{background:var(--c-leilah)}
+.d-jibboco{background:var(--c-jibboco)} .d-harland{background:var(--c-harland)}
+.tc-personal{color:var(--c-personal)} .tc-leilah{color:var(--c-leilah)}
+.tc-jibboco{color:var(--c-jibboco)} .tc-harland{color:var(--c-harland)}
+
+/* section header ▍ */
+.secbar{display:flex;align-items:center;gap:8px;margin:22px 0 10px}
+.secbar .bar{width:3px;height:15px;flex-shrink:0}
+.secbar .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--t3)}
+.secbar .right{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--bdr-card);border-radius:12px;padding:14px}
+.recess{background:var(--recess);border:1px solid var(--bdr);border-radius:10px;padding:12px}
+.dashed{border:1px dashed var(--outline);border-radius:10px;padding:12px;background:transparent}
+
+/* inputs & buttons */
+textarea,input[type=text],input[type=date],input[type=time]{width:100%;background:var(--card);border:1px solid var(--bdr-card);border-radius:12px;padding:11px 12px;font-family:var(--sans);font-size:13px;line-height:1.7;color:var(--t2);resize:vertical;color-scheme:dark}
+textarea:focus,input:focus,select:focus{outline:1px solid var(--accent);border-color:var(--accent)}
+::placeholder{color:var(--faint)}
+select{background:var(--recess);border:1px solid var(--outline);border-radius:7px;color:var(--t3);font-family:var(--mono);font-size:10px;padding:6px 8px;letter-spacing:.06em;color-scheme:dark}
+.btn{font-family:var(--sans);font-size:12.5px;font-weight:600;border-radius:8px;padding:9px 16px;border:1px solid transparent;cursor:pointer;background:var(--accent);color:var(--on-accent);transition:opacity .15s}
+.btn:hover{opacity:.88} .btn:disabled{opacity:.4;cursor:wait}
+.btn.ghost{background:transparent;border-color:var(--outline);color:var(--accent)}
+.btn.grey{background:var(--recess);border-color:var(--outline);color:var(--t3)}
+.btn.full{width:100%}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+
+/* segmented */
+.seg{display:flex;background:var(--seg-track);border-radius:9px;padding:2px;margin:14px 0 10px}
+.seg button{flex:1;border:none;background:transparent;border-radius:7px;padding:7px 4px;font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--mut);cursor:pointer}
+.seg button.on{background:var(--seg-on);color:#fff}
+
+/* chips */
+.fchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.fchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:7px;border:1px solid transparent;background:transparent;color:#55555C;cursor:pointer}
+.fchip .dot{opacity:.3}
+.fchip.on{background:#222228;border-color:var(--outline);color:#D6D6DC}
+.fchip.on .dot{opacity:1}
+.schip{display:inline-block;font-family:var(--mono);font-size:9.5px;padding:2px 8px;border-radius:6px;letter-spacing:.04em}
+
+/* event rows */
+.dayhead{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:14px 0 4px}
+.evrow{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--row)}
+.evrow .time{font-family:var(--mono);font-size:11px;color:var(--mut);width:86px;flex-shrink:0}
+.evrow .ti{flex:1;font-size:13px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evrow .warn{color:var(--amber);font-size:11px}
+.evrow .src{font-family:var(--mono);font-size:10px;color:#4A4A52}
+.evrow .x{border:none;background:none;color:var(--ghost);font-size:14px;cursor:pointer;padding:0 2px}
+.legend{font-family:var(--mono);font-size:9px;color:var(--ghost);letter-spacing:.08em;margin:6px 0 2px}
+
+/* top3 */
+.top3{margin-top:18px}
+.top3 .hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.top3 .hd .bar{width:3px;height:15px;background:var(--accent)}
+.top3 .hd .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+.top3 .hd .pin{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--faint)}
+.top3 .row{display:flex;gap:12px;padding:7px 0;align-items:baseline}
+.top3 .num{font-family:var(--serif);font-size:16px;color:#5C5C64;width:14px}
+
+/* capture cards */
+.frag{background:var(--card);border:1px solid var(--bdr-card);border-radius:10px;padding:11px 12px;margin-bottom:8px;animation:up .35s ease both}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.frag{animation:none}}
+.frag .fh{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.frag .ftag{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase}
+.frag .q{color:var(--amber);font-family:var(--mono);font-size:10px}
+.frag .route{margin-left:auto;font-family:var(--mono);font-size:9px;border:1px solid var(--outline);border-radius:6px;padding:2px 7px;color:var(--t3)}
+.frag .fx{border:none;background:none;color:var(--ghost);cursor:pointer;font-size:13px;margin-left:6px}
+
+/* harland tabs */
+.htabs{display:flex;gap:18px;border-bottom:1px solid var(--rule);margin:14px 0 4px}
+.htab{border:none;background:none;font-family:var(--sans);font-size:13px;font-weight:600;color:var(--faint);padding:8px 2px;cursor:pointer;border-bottom:2px solid transparent}
+.htab.on{color:#fff;border-bottom-color:var(--accent)}
+
+/* pipeline */
+.kanban{display:flex;gap:10px;overflow-x:auto;padding:12px 0 6px;-webkit-overflow-scrolling:touch}
+.kcol{width:230px;flex-shrink:0}
+.kcol .kh{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.lead{background:var(--card);border:1px solid var(--bdr-card);border-radius:10px;padding:11px 12px;margin-bottom:8px}
+.lead .ln{font-family:var(--serif);font-size:16px;font-weight:500;color:var(--t1)}
+.lead .lm{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:.06em;margin:3px 0 7px;text-transform:uppercase}
+.lead .lrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.lead details{margin-top:8px}
+.lead summary{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);cursor:pointer}
+.lead pre{font-family:var(--sans);font-size:12px;color:var(--t3);white-space:pre-wrap;margin-top:7px;line-height:1.6}
+
+/* intake summary card */
+.fieldrow{display:flex;padding:8px 0;border-bottom:1px solid var(--row);gap:8px}
+.fieldrow:last-child{border-bottom:none}
+.fieldrow .fl{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);width:104px;flex-shrink:0;padding-top:2px}
+.fieldrow .fv{font-size:12.5px;color:var(--t2);flex:1}
+.daterow{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--row);align-items:baseline}
+.daterow .dd{font-family:var(--mono);font-size:10.5px;color:var(--c-harland);width:74px;flex-shrink:0}
+.daterow .dw{flex:1;font-size:12.5px}
+.daterow .da{font-family:var(--mono);font-size:9.5px;color:var(--amber);text-transform:uppercase;letter-spacing:.06em}
+.twocol{display:flex;gap:10px;margin-top:10px}
+.twocol .recess{flex:1;font-size:12px;line-height:1.7;color:var(--t3)}
+.twocol .rl{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.qrow{display:flex;gap:10px;align-items:flex-start;padding:7px 0;cursor:pointer}
+.qbox{width:15px;height:15px;border:1px solid var(--outline);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--on-accent)}
+.qrow.ck .qbox{background:var(--accent);border-color:var(--accent)}
+.qrow.ck .qt{text-decoration:line-through;color:var(--faint)}
+.qrow .qt{font-size:12.5px}
+
+/* drafts generator */
+.genbtn{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--bdr-card);border-radius:10px;padding:12px 14px;cursor:pointer;margin-bottom:8px}
+.genbtn:hover{border-color:var(--outline)}
+.genbtn .g1{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}
+.genbtn .g2{font-size:13px;color:var(--t2);margin-top:3px}
+.qitem{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--row)}
+.qitem .qx{border:none;background:none;color:var(--ghost);cursor:pointer;font-size:13px}
+.qitem .txt{flex:1;font-size:12.5px;color:var(--t3)}
+
+/* handoff */
+.hsec{margin-top:14px}
+.hsec .hh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.hsec .hh .bar{width:3px;height:14px;background:var(--c-harland)}
+.hsec .hh .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--t3)}
+.hsec .li{font-size:12.5px;color:var(--t3);padding:4px 0 4px 4px}
+.hsec .li.bad{color:var(--amber);background:rgba(224,168,92,.08);border-radius:6px;padding:6px 8px;margin:3px 0}
+.warnline{font-size:11.5px;color:var(--amber);margin-top:10px;font-family:var(--mono);letter-spacing:.04em}
+
+/* deadlines */
+.dlrow{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--row)}
+.dlrow .dld{font-family:var(--mono);font-size:10.5px;color:var(--mut);width:44px;flex-shrink:0}
+.dlrow .dlt{flex:1;font-size:13px}
+.dlrow .due{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--ghost);border:1px solid var(--bdr);border-radius:6px;padding:2px 7px}
+.dlrow .due.soon{color:var(--amber);border-color:rgba(224,168,92,.33)}
+
+/* bottom sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}
+.scrim.on{opacity:1;pointer-events:auto}
+.bsheet{position:fixed;left:0;right:0;bottom:0;z-index:95;max-width:520px;margin:0 auto;background:var(--sheet);border-radius:18px 18px 0 0;border:1px solid var(--bdr-card);border-bottom:none;transform:translateY(105%);transition:transform .28s cubic-bezier(.3,.9,.3,1);max-height:82vh;display:flex;flex-direction:column}
+.bsheet.on{transform:none}
+.bsheet .grab{width:36px;height:4px;border-radius:2px;background:var(--outline);margin:10px auto 4px}
+.bsheet .bh{display:flex;align-items:flex-start;gap:10px;padding:8px 18px 12px;border-bottom:1px solid var(--rule)}
+.bsheet .bt{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--t1);flex:1;line-height:1.5;text-transform:uppercase}
+.bsheet .bx{border:none;background:none;color:var(--mut);font-size:16px;cursor:pointer;padding:0 4px}
+.bsheet .bb{overflow-y:auto;padding:14px 18px;font-family:var(--sans);font-size:12.5px;line-height:1.75;white-space:pre-wrap;color:var(--t2)}
+.bsheet .bf{padding:12px 18px calc(16px + env(safe-area-inset-bottom))}
+
+/* status + misc */
+.status{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--accent);min-height:16px;margin-top:8px}
+.status.err{color:var(--amber)}
+.spin{display:inline-block;width:10px;height:10px;border:1.5px solid var(--outline);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.empty{text-align:center;padding:34px 10px}
+.empty .ed{width:6px;height:6px;border-radius:50%;background:var(--outline);margin:0 auto 12px}
+.empty .e1{font-family:var(--serif);font-style:italic;font-size:19px;color:var(--mut)}
+.empty .e2{font-size:12px;color:var(--faint);margin-top:6px}
+.gear{position:absolute;top:22px;right:18px;border:1px solid var(--outline);background:none;color:var(--mut);border-radius:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;padding:6px 10px;cursor:pointer;text-transform:uppercase}
+
+/* views + nav */
+.view{display:none}.view.on{display:block}
+.hview{display:none}.hview.on{display:block}
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(16,16,19,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--bdr)}
+.nav-in{max-width:520px;margin:0 auto;display:flex;padding:12px 8px calc(20px + env(safe-area-inset-bottom))}
+.nitem{flex:1;border:none;background:none;cursor:pointer;text-align:center}
+.nitem .ind{display:block;width:14px;height:2px;margin:0 auto 6px;background:transparent}
+.nitem .nl{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.nitem.on .ind{background:var(--accent)}
+.nitem.on .nl{color:var(--accent)}
+.nitem:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+</style>
+</head>
+<body>
+<div class="frame">
+  <button class="gear" onclick="openRules()">Rules</button>
+
+  <!-- ================= TODAY ================= -->
+  <section class="view on" id="v-today">
+    <div class="kick" id="dateline">FRI 7/11 · 09:42 · TAIPEI</div>
+    <div class="title">Today</div>
+    <div id="dueBanner"></div>
+
+    <div class="seg" id="modeSeg">
+      <button class="on" data-m="quick">Quick</button>
+      <button data-m="full">Full</button>
+    </div>
+    <div class="fchips" id="filterChips"></div>
+    <div class="legend">▤ CALENDAR · ✎ QUICK-ADD</div>
+
+    <div id="todayBody"></div>
+
+    <div class="secbar"><span class="bar" style="background:var(--outline)"></span><span class="lbl">Quick add</span></div>
+    <div class="card">
+      <input type="text" id="evTitle" placeholder="What is it — e.g. Louie start class / JJ assessment">
+      <div class="btnrow">
+        <select id="evDomain"><option value="harland">HARLAND</option><option value="personal">PERSONAL</option><option value="leilah">LEILAH</option><option value="jibboco">JIBBOCO</option></select>
+        <input type="date" id="evDate" style="width:auto;padding:7px 8px;font-size:12px">
+        <input type="time" id="evTime" style="width:auto;padding:7px 8px;font-size:12px">
+        <button class="btn" onclick="addEvent()">Add</button>
+      </div>
+      <p style="font-size:11px;color:var(--faint);margin-top:8px">Leave date empty → goes to Unscheduled.</p>
+    </div>
+  </section>
+
+  <!-- ================= CAPTURE ================= -->
+  <section class="view" id="v-capture">
+    <div class="kick">DUMP NOW · SORT LATER</div>
+    <div class="title">Capture</div>
+    <div style="margin-top:14px">
+      <textarea id="capInput" rows="6" placeholder="中英混著寫沒關係 — one thought per line"></textarea>
+      <div class="btnrow" style="justify-content:flex-end">
+        <button class="btn" id="capBtn" onclick="sortCapture()">Sort it</button>
+      </div>
+      <div class="status" id="capStatus"></div>
+    </div>
+    <div id="capDivider"></div>
+    <div id="capList"></div>
+  </section>
+
+  <!-- ================= HARLAND ================= -->
+  <section class="view" id="v-harland">
+    <div class="kick" style="color:var(--c-harland)">ADMISSIONS &amp; OPERATIONS</div>
+    <div class="title">Harland</div>
+    <div class="htabs">
+      <button class="htab on" data-h="pipeline">Pipeline</button>
+      <button class="htab" data-h="intake">Intake</button>
+      <button class="htab" data-h="drafts">Drafts</button>
+      <button class="htab" data-h="handoff">Handoff</button>
+    </div>
+
+    <div class="hview on" id="h-pipeline">
+      <div class="kanban" id="kanban"></div>
+    </div>
+
+    <div class="hview" id="h-intake">
+      <div style="margin-top:14px">
+        <textarea id="leadInput" rows="6" placeholder="Paste raw call notes here — zh/en mixed is fine."></textarea>
+        <div class="btnrow"><button class="btn" id="leadBtn" onclick="parseLead()">Parse notes</button></div>
+        <div class="status" id="leadStatus"></div>
+      </div>
+      <div id="intakeResult"></div>
+    </div>
+
+    <div class="hview" id="h-drafts">
+      <div class="secbar"><span class="bar" style="background:var(--c-harland)"></span><span class="lbl">Student messages</span><span class="right">Teachers · Harris</span></div>
+      <div class="card">
+        <div class="btnrow" style="margin-top:0">
+          <select id="smType" style="flex:1" onchange="smHint()">
+            <option value="NEW LEAD">1 · NEW LEAD card — to Mr. Harris</option>
+            <option value="ASSESSMENT">2 · ASSESSMENT — opportunity to teacher</option>
+            <option value="PARENT DIAGNOSTIC">3 · PARENT — diagnostic + application 中/EN</option>
+            <option value="PARENT CONFIRM">4 · PARENT — confirm assessment time 中/EN</option>
+            <option value="NEW STUDENT">NEW STUDENT — assign teacher</option>
+            <option value="SCHEDULE CHANGE">SCHEDULE CHANGE</option>
+            <option value="TEACHER CHANGE">TEACHER CHANGE</option>
+            <option value="SUBSTITUTE CLASS">SUBSTITUTE CLASS — offer slots</option>
+            <option value="ENROLMENT">ENROLMENT — confirmed &amp; starting</option>
+          </select>
+        </div>
+        <div class="btnrow">
+          <select id="smLead" style="flex:1"><option value="">— pick from pipeline (optional) —</option></select>
+        </div>
+        <input type="text" id="smWho" placeholder="Recipient — e.g. Dr. Teachey / Mr. Harris" style="margin-top:8px">
+        <textarea id="smDetail" rows="3" style="margin-top:8px" placeholder="Details — day/date/time, subject, what changed, old → new teacher…"></textarea>
+        <div class="btnrow"><button class="btn" id="smBtn" onclick="genStudentMsg()">Draft message</button></div>
+        <div class="status" id="smStatus"></div>
+      </div>
+
+      <div class="secbar"><span class="bar" style="background:var(--c-harland)"></span><span class="lbl">Queue for next briefing</span></div>
+      <textarea id="qInput" rows="3" placeholder="Anything Mr. Harris needs to hear — one item at a time."></textarea>
+      <div class="btnrow"><button class="btn grey" onclick="queueItem()">Add to queue</button></div>
+      <div id="qList"></div>
+      <div id="carryBlock"></div>
+      <div class="secbar"><span class="bar" style="background:var(--accent)"></span><span class="lbl" style="color:var(--accent)">Generate · Recurring message types</span></div>
+      <button class="genbtn" onclick="runBrief('morning')">
+        <div class="g1">ADMIN &amp; SALES //</div>
+        <div class="g2" id="gAm">MORNING BRIEFING · <span class="md"></span></div>
+      </button>
+      <button class="genbtn" onclick="runBrief('eod')">
+        <div class="g1">ADMIN &amp; SALES //</div>
+        <div class="g2">END OF DAY BRIEFING · <span class="md"></span></div>
+      </button>
+      <div class="status" id="briefStatus"></div>
+      <div class="secbar"><span class="bar" style="background:var(--outline)"></span><span class="lbl">Recent drafts</span></div>
+      <div id="draftHist"><p style="color:var(--faint);font-size:12px">Generated briefings are kept here.</p></div>
+    </div>
+
+    <div class="hview" id="h-handoff">
+      <div id="handoffBody"></div>
+
+      <div class="secbar"><span class="bar" style="background:var(--amber)"></span><span class="lbl">Problem log · Head Teacher</span><span class="right">Dated paper trail</span></div>
+      <textarea id="probInput" rows="3" placeholder="Log a problem as it happens — curriculum gap, ops breakdown, a teacher's unanswered question. zh/en fine."></textarea>
+      <div class="btnrow">
+        <select id="probType"><option value="curriculum">CURRICULUM</option><option value="operations">OPERATIONS</option><option value="teacher question">TEACHER QUESTION</option></select>
+        <button class="btn grey" onclick="addProblem()">Log it</button>
+      </div>
+      <div id="probList"></div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn" id="escBtn" onclick="runEscalation()">Generate escalation report</button>
+      </div>
+      <div class="status" id="escStatus"></div>
+    </div>
+  </section>
+
+  <!-- ================= BRANDS ================= -->
+  <section class="view" id="v-brands">
+    <div class="kick">JIBBOCO · LEILAH — CONTENT</div>
+    <div class="title">Brands</div>
+
+    <div class="secbar"><span class="bar" style="background:var(--c-jibboco)"></span><span class="lbl">Deadlines · Next 10 days</span><a class="right" id="dlSheetLink" href="#" target="_blank" rel="noopener" style="text-decoration:none">↗ SHEET</a></div>
+    <div id="dlList"></div>
+    <div class="card" style="margin-top:10px">
+      <input type="text" id="dlTitle" placeholder="Content deadline — e.g. Post 5 carousel final">
+      <div class="btnrow">
+        <select id="dlDomain"><option value="jibboco">JIBBOCO</option><option value="leilah">LEILAH</option><option value="personal">PERSONAL</option></select>
+        <input type="date" id="dlDate" style="width:auto;padding:7px 8px;font-size:12px">
+        <button class="btn grey" onclick="addDeadline()">Add</button>
+      </div>
+    </div>
+
+    <div class="secbar"><span class="bar" style="background:var(--c-leilah)"></span><span class="lbl">Weekly audit</span><a class="right" id="auditSheetLink" href="#" target="_blank" rel="noopener" style="text-decoration:none">↗ @YUANYUAN_RUBY SHEET</a></div>
+    <div class="seg" id="acctSeg">
+      <button class="on" data-a="yuanyuan_ruby">ruby</button>
+      <button data-a="leilei_leilah">leilah</button>
+      <button data-a="jibboco">jibboco</button>
+    </div>
+    <textarea id="auditInput" rows="5" placeholder="Paste this week's numbers &amp; posts for the selected account."></textarea>
+    <div class="btnrow"><button class="btn" id="auditBtn" onclick="runAudit()">Run weekly audit</button></div>
+    <div class="status" id="auditStatus"></div>
+    <div id="auditHist"></div>
+
+    <div class="secbar"><span class="bar" style="background:var(--c-leilah)"></span><span class="lbl">Leilah · Training week</span><span class="right">Theory &amp; measurables</span></div>
+    <div class="card" style="border-left:3px solid var(--c-leilah)">
+      <label class="f-label" style="display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:0 0 6px">This week's plan — paste from your calendar</label>
+      <textarea id="llPlan" rows="4" placeholder="Mon: recall proofing at park&#10;Tue: herding balance drills&#10;…"></textarea>
+      <label class="f-label" style="display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:10px 0 6px">Your resources — books, courses, methods you follow</label>
+      <textarea id="llRes" rows="3" placeholder="e.g. Denise Fenzi engagement work · Control Unleashed · your trainer's protocol…"></textarea>
+      <div class="btnrow">
+        <button class="btn grey" onclick="saveLeilah()">Save</button>
+        <button class="btn" id="llBtn" onclick="briefTrainingWeek()">Brief my training week</button>
+      </div>
+      <div class="status" id="llStatus"></div>
+    </div>
+
+    <div class="secbar"><span class="bar" style="background:var(--c-leilah)"></span><span class="lbl">Leilah · Ask the trainer</span></div>
+    <textarea id="trainInput" rows="3" placeholder="A training issue, a behaviour question, the theory behind a drill."></textarea>
+    <div class="btnrow"><button class="btn grey" id="trainBtn" onclick="askTrainer()">Research &amp; answer</button></div>
+    <div class="status" id="trainStatus"></div>
+  </section>
+
+  <!-- ================= RULES (hidden view) ================= -->
+  <section class="view" id="v-rules">
+    <div class="kick">THE ASSISTANT READS THESE FIRST</div>
+    <div class="title">Rules</div>
+    <p style="font-size:12px;color:var(--mut);margin:12px 0">Injected into every AI run — formats, voice, hard rules. Paste your skill text here to upgrade the assistant without code.</p>
+    <textarea id="rulesInput" rows="18" style="font-size:12.5px"></textarea>
+    <div class="secbar"><span class="bar" style="background:var(--c-leilah)"></span><span class="lbl">Brand sheet tabs</span></div>
+    <p style="font-size:12px;color:var(--mut);margin-bottom:8px">Open each tab in your brands sheet, copy the URL from the address bar (the gid= part changes per tab), paste here once.</p>
+    <input type="text" id="lnkRuby" placeholder="@yuanyuan_ruby tab URL" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:10.5px;margin-bottom:6px">
+    <input type="text" id="lnkLeilah" placeholder="@leilei_leilah tab URL" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:10.5px;margin-bottom:6px">
+    <input type="text" id="lnkJibbo" placeholder="@jibboco tab URL" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:10.5px;margin-bottom:6px">
+    <input type="text" id="lnkDl" placeholder="deadlines tab URL" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:10.5px">
+    <div class="btnrow"><button class="btn grey" onclick="saveBrandLinks()">Save tab links</button></div>
+    <div class="status" id="lnkStatus"></div>
+
+    <div class="secbar"><span class="bar" style="background:var(--c-jibboco)"></span><span class="lbl">Backend · Google Sheet</span></div>
+    <p style="font-size:12px;color:var(--mut);margin-bottom:8px">Your backend sheet is "Ruby Assistant — Backend" in Google Drive. Two ways to get data there: paste your Apps Script URL for one-tap sync, or Copy backup and paste into the sheet manually.</p>
+    <input type="text" id="syncUrlInput" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:11px">
+    <div class="btnrow">
+      <button class="btn grey" onclick="S.syncUrl=document.getElementById('syncUrlInput').value.trim()||null;persist();ok('syncStatus','Sync URL saved.')">Save URL</button>
+      <button class="btn" onclick="syncBackend()">Sync to sheet</button>
+      <button class="btn ghost" onclick="copyBackup()">Copy backup (CSV)</button>
+    </div>
+    <div class="status" id="syncStatus"></div>
+
+    <div class="secbar"><span class="bar" style="background:var(--outline)"></span><span class="lbl">API key · standalone mode only</span></div>
+    <input type="text" id="apiKeyInput" placeholder="sk-ant-… (only needed when the file is opened outside Claude)" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:11px">
+    <p style="font-size:11px;color:var(--faint);margin-top:6px">The key is billing access to your Anthropic account. It stays in this browser only — never share or publish this file with the key saved.</p>
+    <div class="btnrow">
+      <button class="btn" onclick="saveRules()">Save rules</button>
+      <button class="btn grey" onclick="nav('today')">Back</button>
+      <button class="btn ghost" style="margin-left:auto" onclick="resetAll()">Reset all data</button>
+    </div>
+    <div class="status" id="rulesStatus"></div>
+  </section>
+</div>
+
+<!-- bottom sheet -->
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="bsheet" id="bsheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <div class="bh"><div class="bt" id="sheetTitle"></div><button class="bx" onclick="closeSheet()" aria-label="close">✕</button></div>
+  <textarea class="bb" id="sheetBody" style="border:none;background:transparent;border-radius:0;resize:none;flex:1;min-height:220px" oninput="sheetText=this.value"></textarea>
+  <div class="bf"><button class="btn full" id="sheetCopy" onclick="copySheet()">Copy message</button></div>
+</div>
+
+<nav class="nav"><div class="nav-in">
+  <button class="nitem on" data-v="today"><span class="ind"></span><span class="nl">Today</span></button>
+  <button class="nitem" data-v="capture"><span class="ind"></span><span class="nl">Capture</span></button>
+  <button class="nitem" data-v="harland"><span class="ind"></span><span class="nl">Harland</span></button>
+  <button class="nitem" data-v="brands"><span class="ind"></span><span class="nl">Brands</span></button>
+</div></nav>
+
+<script>
+/* ============ STATE ============ */
+const DOMAINS = ['personal','leilah','jibboco','harland'];
+const STAGES = [['new','NEW LEAD'],['assessment','ASSESSMENT'],['admission','ADMISSION'],['enrolment','ENROLMENT']];
+const STATUS_LEX = ['awaiting report','pending diagnostic link','awaiting confirmation','proposal sent','confirmed','proposed','reverting','sorted','marking as lost'];
+const STATUS_COLOR = s => ({'confirmed':'--green','sorted':'--green','marking as lost':'--red','proposal sent':'--c-harland','proposed':'--c-harland'}[s]||'--c-jibboco');
+
+const DEFAULT_RULES = `## Briefing format (Harland — to Mr. Harris)
+- Heading line: ADMIN & SALES // MORNING BRIEFING · M/D  (or END OF DAY BRIEFING)
+- Greeting line: "Good morning Mr. Harris" / "Good evening Mr. Harris", then a one-line intent.
+- Section headers start with ▍ (e.g. ▍NEEDS YOUR INPUT, ▍ASSESSMENTS, ▍ENROLMENT, ▍OTHERS)
+- Bullets use · ; sub-items indent two spaces then ->>
+- Subject lines for handoffs: TYPE // STUDENT NAME · DETAIL (all caps)
+- "confirm payment" = ask Mr. Harris to VERIFY the payment was made — never "confirm receipt of funds"
+- Dates M/D · times 24h · timezone Asia/Taipei
+- Colleagues: Mr. Harris (primary), Mr. Dalton, Mr. Arnold, Mr. Marion, Mr. Hutten, Dr. Teachey.
+
+## Voice
+- Direct, understated. No exclamation marks, no AI filler, no "I hope this finds you well."
+- Chinese content: Traditional Chinese (繁體中文), Taiwan usage.
+
+## Pipeline
+- Stages: New Lead → Assessment → Admission → Enrolment
+- Status lexicon (only these): awaiting report · pending diagnostic link · awaiting confirmation · proposal sent · confirmed · proposed · reverting · sorted · marking as lost
+
+## Account jobs (weekly audits)
+- @leilei_leilah = reach engine. Hooks, shares, relatability. Character over cuteness.
+- @jibboco = premium brand. Saves, profile visits, on-palette consistency. Never trend-chasing.
+- @yuanyuan_ruby = personal footnote. Saves & shares over vanity metrics.
+
+## Subject-line lexicon (only these)
+NEW LEAD / ASSESSMENT / ENROLMENT / SCHEDULE CHANGE / TEACHER ASSIGNMENT / TEACHER CHANGE — // STUDENT NAME · DETAIL
+ADMIN & SALES // MORNING BRIEFING · DATE · and · // END OF DAY BRIEFING · DATE
+OPERATIONS // HEAD TEACHER · ESCALATION · DATE
+CURRICULUM or OPERATIONS // HEAD TEACHER · ISSUE
+TEACHER QUESTION // TEACHER NAME · TOPIC
+HANDOFF // WEEK DATE–DATE
+
+## Hard rules
+- Never invent owners, deadlines, or facts. Missing info = open question.
+- Never mark a lead lost/closed without Ruby saying so.`;
+
+const BRAND_SHEET='https://docs.google.com/spreadsheets/d/1mhfYImhMRwfDvvd8xTLhdsNfGmw0fi_WlXlwHtCTRNw/edit?gid=930491512#gid=930491512';
+let S = { events:[], notes:[], leads:[], briefQueue:[], carryover:[], briefs:[],
+          deadlines:[], audits:[], problems:[], top3:null, rules:DEFAULT_RULES,
+          brandLinks:{yuanyuan_ruby:BRAND_SHEET, leilei_leilah:BRAND_SHEET, jibboco:BRAND_SHEET, deadlines:BRAND_SHEET} };
+let mode='quick', filters={personal:true,leilah:true,jibboco:true,harland:true}, acct='yuanyuan_ruby', htab='pipeline';
+let intakeDraft=null, handoffDoc=null;
+
+/* Dual-mode storage: window.storage inside Claude; localStorage when opened standalone */
+const IN_CLAUDE = typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+async function loadState(){
+  try{
+    if(IN_CLAUDE){
+      const r=await window.storage.get('ruby-hq-v2');
+      if(r&&r.value) S=Object.assign(S,JSON.parse(r.value));
+    } else {
+      const r=localStorage.getItem('ruby-hq-v2');
+      if(r) S=Object.assign(S,JSON.parse(r));
+    }
+  }catch(e){}
+  renderAll();
+}
+async function persist(){
+  try{
+    if(IN_CLAUDE) await window.storage.set('ruby-hq-v2',JSON.stringify(S));
+    else localStorage.setItem('ruby-hq-v2',JSON.stringify(S));
+  }catch(e){console.error(e);}
+}
+
+/* ============ AI CORE ============ */
+async function ai(user, useSearch){
+  const body={ model:"claude-sonnet-4-6", max_tokens:1000,
+    messages:[{role:"user", content:"HOUSE RULES (follow exactly):\n"+S.rules+"\n\n---\n\n"+user}] };
+  if(useSearch) body.tools=[{type:"web_search_20250305",name:"web_search"}];
+  const keyHeaders=()=>({"Content-Type":"application/json","x-api-key":S.apiKey,
+    "anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"});
+  const call=async headers=>{
+    const res=await fetch("https://api.anthropic.com/v1/messages",
+      {method:"POST",headers,body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message||'API error — check your key and credits.');
+    if(!data.content) throw new Error('No response');
+    return data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+  };
+  if(IN_CLAUDE){
+    try{ return await call({"Content-Type":"application/json"}); }
+    catch(e){
+      if(S.apiKey){ try{ return await call(keyHeaders()); }catch(e2){ throw e2; } }
+      throw new Error("Couldn't reach the AI through Claude here. Fix: tap RULES (top right), paste your Anthropic API key, save — the app will then connect directly from any device.");
+    }
+  }
+  if(!S.apiKey) throw new Error("No API key set. Tap RULES (top right) and paste your Anthropic API key.");
+  return await call(keyHeaders());
+}
+function pj(t){ const c=t.replace(/```json|```/g,'').trim();
+  return JSON.parse(c.slice(c.indexOf('{'), c.lastIndexOf('}')+1)); }
+
+/* ============ HELPERS ============ */
+const esc=s=>(s??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const md=d=>{ const x=d?new Date(d+'T00:00:00'):new Date(); return (x.getMonth()+1)+'/'+x.getDate(); };
+const todayISO=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei'}).format(new Date());
+function tpe(){ const n=new Date();
+  const f=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Taipei',weekday:'short',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+  const p=Object.fromEntries(f.formatToParts(n).map(x=>[x.type,x.value]));
+  return `${p.weekday.toUpperCase()} ${p.month}/${p.day} · ${p.hour}:${p.minute} · TAIPEI`; }
+function chipHTML(st){ const v=`var(${STATUS_COLOR(st)})`;
+  return `<span class="schip" style="color:${v};border:1px solid color-mix(in srgb, ${v} 33%, transparent);background:color-mix(in srgb, ${v} 8%, transparent)">${esc(st)}</span>`; }
+function err(el,e){ document.getElementById(el).className='status err'; document.getElementById(el).textContent=e.message; }
+function busy(el,msg){ const n=document.getElementById(el); n.className='status'; n.innerHTML='<span class="spin"></span>'+msg; }
+function ok(el,msg){ const n=document.getElementById(el); n.className='status'; n.textContent=msg||''; }
+
+/* ============ NAV ============ */
+function nav(v){
+  document.querySelectorAll('.nitem').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');
+}
+document.querySelectorAll('.nitem').forEach(b=>b.onclick=()=>nav(b.dataset.v));
+function openRules(){ document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  document.getElementById('v-rules').classList.add('on'); }
+
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); mode=b.dataset.m; renderToday(); });
+document.querySelectorAll('.htab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.htab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.hview').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); htab=b.dataset.h;
+  document.getElementById('h-'+htab).classList.add('on'); });
+document.querySelectorAll('#acctSeg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#acctSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); acct=b.dataset.a; updateBrandLinks(); });
+function updateBrandLinks(){
+  const a=document.getElementById('auditSheetLink');
+  if(a){ a.href=(S.brandLinks&&S.brandLinks[acct])||BRAND_SHEET; a.textContent='↗ @'+acct.toUpperCase()+' SHEET'; }
+  const d=document.getElementById('dlSheetLink');
+  if(d){ d.href=(S.brandLinks&&S.brandLinks.deadlines)||BRAND_SHEET; }
+}
+
+/* ============ TODAY ============ */
+function addEvent(){
+  const t=document.getElementById('evTitle').value.trim(); if(!t) return;
+  S.events.push({id:Date.now(), title:t, domain:document.getElementById('evDomain').value,
+    date:document.getElementById('evDate').value||null, time:document.getElementById('evTime').value||null, src:'manual'});
+  document.getElementById('evTitle').value=''; document.getElementById('evTime').value='';
+  persist(); renderToday();
+}
+function delEvent(id){ S.events=S.events.filter(e=>e.id!==id); persist(); renderToday(); }
+
+function renderFilters(){
+  document.getElementById('filterChips').innerHTML = DOMAINS.map(d=>
+    `<button class="fchip ${filters[d]?'on':''}" onclick="filters['${d}']=!filters['${d}'];renderToday();renderFilters()">
+     <span class="dot d-${d}"></span>${d}</button>`).join('');
+}
+function evRow(e){
+  return `<div class="evrow"><span class="dot d-${e.domain}"></span>
+    <span class="time">${e.time?esc(e.time):'—'}</span>
+    <span class="ti">${esc(e.title)}</span>
+    <span class="src">${e.src==='manual'?'✎':'▤'}</span>
+    <button class="x" onclick="delEvent(${e.id})" aria-label="delete">×</button></div>`;
+}
+function renderToday(){
+  const el=document.getElementById('todayBody');
+  const vis=S.events.filter(e=>filters[e.domain]);
+  if(!vis.length){
+    el.innerHTML=`<div class="empty"><div class="ed"></div><div class="e1">Nothing on the books.</div>
+      <div class="e2">Quick-add below, or capture fragments and sort them.</div></div>`; return;
+  }
+  const t=todayISO();
+  const tomorrow=new Date(new Date(t).getTime()+86400000).toISOString().slice(0,10);
+  if(mode==='quick'){
+    const groups=[['TODAY · '+tpe().split(' · ')[0]+' '+md(t), vis.filter(e=>e.date===t)],
+                  ['TOMORROW · '+md(tomorrow), vis.filter(e=>e.date===tomorrow)],
+                  ['LATER', vis.filter(e=>e.date&&e.date>tomorrow)],
+                  ['UNSCHEDULED', vis.filter(e=>!e.date)]];
+    el.innerHTML=groups.filter(g=>g[1].length).map(g=>
+      `<div class="dayhead">${g[0]}</div>`+
+      g[1].sort((a,b)=>(a.time||'99').localeCompare(b.time||'99')).map(evRow).join('')).join('');
+  } else {
+    const order=['harland','jibboco','leilah','personal'];
+    el.innerHTML = order.filter(d=>filters[d]).map(d=>{
+      const evs=vis.filter(e=>e.domain===d&&(!e.date||e.date>=t));
+      if(!evs.length) return '';
+      return `<div class="secbar"><span class="bar d-${d}"></span><span class="lbl tc-${d}">${d}</span></div>`+
+        evs.map(e=>`<div class="evrow"><span class="time">${e.date?md(e.date):'—'}${e.time?' '+e.time:''}</span>
+        <span class="ti" style="white-space:normal">${esc(e.title)}</span>
+        <button class="x" onclick="delEvent(${e.id})">×</button></div>`).join('');
+    }).join('') + (S.top3?`
+      <div class="card top3"><div class="hd"><span class="bar"></span><span class="lbl">Top 3 Today</span><span class="pin">PINNED</span></div>
+      ${S.top3.map((x,i)=>`<div class="row"><span class="num">${i+1}</span><span>${esc(x)}</span></div>`).join('')}</div>`:'')+
+      `<div class="btnrow" style="margin-top:14px"><button class="btn ghost" id="top3Btn" onclick="genTop3()">✦ Generate Top 3</button></div>
+       <div class="status" id="top3Status"></div>`;
+  }
+}
+async function genTop3(){
+  const b=document.getElementById('top3Btn'); b.disabled=true; busy('top3Status','Reading the day…');
+  try{
+    const out=await ai(`Today is ${tpe()}. Ruby's events: ${JSON.stringify(S.events)}
+Recent notes: ${JSON.stringify(S.notes.slice(0,12))}
+Unfinished Harland items: ${JSON.stringify(S.carryover)}
+Pick the 3 things that matter most today. Respond ONLY with JSON, no fences: {"top3":["...","...","..."]}`);
+    S.top3=pj(out).top3.slice(0,3); persist(); renderToday();
+  }catch(e){ err('top3Status',e); if(document.getElementById('top3Btn'))document.getElementById('top3Btn').disabled=false; }
+}
+
+/* ============ CAPTURE ============ */
+async function sortCapture(){
+  const el=document.getElementById('capInput'); const raw=el.value.trim(); if(!raw) return;
+  const b=document.getElementById('capBtn'); b.disabled=true; busy('capStatus','Sorting fragments…');
+  try{
+    const out=await ai(`Sort Ruby's raw capture dump into fragments. Keep each fragment's original zh/en text verbatim. Tag each with exactly one domain: personal | leilah | jibboco | harland. Mark uncertain:true if the domain is a guess. For harland fragments add route: one of "Follow-up","Schedule change","Action item","Decision".
+
+DUMP:
+${raw}
+
+Respond ONLY with JSON, no fences:
+{"fragments":[{"text":"...","domain":"harland","uncertain":false,"route":"Follow-up"}]}`);
+    const j=pj(out);
+    const now=Date.now();
+    (j.fragments||[]).forEach((f,i)=>S.notes.unshift({id:now+i, text:f.text, domain:DOMAINS.includes(f.domain)?f.domain:'personal', uncertain:!!f.uncertain, route:f.route||null}));
+    el.value=''; persist(); ok('capStatus',''); renderCapture(j.fragments.length);
+  }catch(e){ err('capStatus',e); }
+  b.disabled=false; b.textContent='Re-sort';
+}
+function delNote(id){ S.notes=S.notes.filter(n=>n.id!==id); persist(); renderCapture(); }
+function renderCapture(justSorted){
+  document.getElementById('capDivider').innerHTML = S.notes.length?
+    `<div class="dayhead" style="margin-top:18px">SORTED · ${S.notes.length} FRAGMENT${S.notes.length>1?'S':''} ——— (?) = UNCERTAIN</div>`:'';
+  document.getElementById('capList').innerHTML = S.notes.map(n=>`
+    <div class="frag"><div class="fh"><span class="dot d-${n.domain}"></span>
+      <span class="ftag tc-${n.domain}">${n.domain}</span>
+      ${n.uncertain?'<span class="q">(?)</span>':''}
+      ${n.route?`<span class="route">→ ${esc(n.route)}</span>`:''}
+      <button class="fx" onclick="delNote(${n.id})" aria-label="delete">×</button></div>
+    <div style="font-size:13px;color:var(--t2)">${esc(n.text)}</div></div>`).join('');
+}
+
+/* ============ HARLAND · PIPELINE ============ */
+function renderKanban(){
+  S.leads.forEach(ensureFlow);
+  document.getElementById('kanban').innerHTML = STAGES.map(([k,label])=>{
+    const cards=S.leads.filter(l=>l.stage===k);
+    return `<div class="kcol"><div class="kh">${label} · ${cards.length}</div>`+
+      (cards.length?cards.map(l=>{
+        const n=nextStep(l);
+        const flowRow = `<div class="lrow" style="gap:4px;margin-top:9px">`+
+          FLOW_STEPS.map(([fk,fl])=>`<span class="schip" onclick="toggleFlow(${l.id},'${fk}')" style="cursor:pointer;font-size:8px;letter-spacing:.06em;${l.flow[fk]
+            ?'color:var(--green);border:1px solid rgba(169,195,162,.35);background:rgba(169,195,162,.08)'
+            :'color:var(--ghost);border:1px solid var(--bdr)'}">${l.flow[fk]?'✓':'·'} ${fl}</span>`).join('')+`</div>`;
+        const nextRow = n
+          ? `<div style="margin-top:8px;font-size:11px;color:var(--amber)"><span class="mono" style="font-size:8.5px;letter-spacing:.14em">NEXT →</span> ${esc(n.label)}</div>
+             <div class="lrow"><button class="btn grey" style="padding:6px 10px;font-size:11px" onclick="draftNext(${l.id})">Draft it</button></div>`
+          : `<div style="margin-top:8px;font-size:11px;color:var(--green)"><span class="mono" style="font-size:8.5px;letter-spacing:.14em">CHAIN COMPLETE</span> — assessment set. After it runs, move the stage forward.</div>`;
+        return `
+      <div class="lead"><div class="ln">${esc(l.name)}</div>
+        <div class="lm">${esc(l.meta||'')}</div>
+        ${chipHTML(l.status)}
+        ${flowRow}
+        ${nextRow}
+        <div class="lrow">
+          <select onchange="moveLead(${l.id},this.value)">${STAGES.map(([sk,sl])=>`<option value="${sk}" ${l.stage===sk?'selected':''}>${sl}</option>`).join('')}</select>
+          <select onchange="statusLead(${l.id},this.value)">${STATUS_LEX.map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}</select>
+        </div>
+        ${l.card?`<details><summary>Full card</summary><pre>${esc(l.card)}</pre></details>`:''}
+        <div class="lrow"><button class="fx" style="font-family:var(--mono);font-size:9px;color:var(--ghost)" onclick="delLead(${l.id})">REMOVE</button></div>
+      </div>`;}).join(''):`<div style="font-size:11.5px;color:var(--ghost);padding:6px 2px">Empty.</div>`)+`</div>`;
+  }).join('');
+}
+function moveLead(id,v){ const l=S.leads.find(l=>l.id===id); if(l){l.stage=v;persist();renderKanban();} }
+function statusLead(id,v){ const l=S.leads.find(l=>l.id===id); if(l){l.status=v;persist();renderKanban();} }
+function delLead(id){ if(!confirm('Remove this lead card?'))return; S.leads=S.leads.filter(l=>l.id!==id); persist(); renderKanban(); }
+
+/* ============ HARLAND · INTAKE ============ */
+async function parseLead(){
+  const el=document.getElementById('leadInput'); const raw=el.value.trim(); if(!raw) return;
+  const b=document.getElementById('leadBtn'); b.disabled=true; busy('leadStatus','Parsing the notes…');
+  try{
+    const out=await ai(`Parse Ruby's raw intake call notes into the fixed Lead Summary structure. Never invent facts — unknowns become "(unknown — follow up)".
+
+RAW NOTES:
+${raw}
+
+Respond ONLY with JSON, no fences:
+{"name":"student name","meta":"G8 · KCIS · ENGLISH WRITING style one-liner",
+ "fields":{"student":"...","parent":"...","source":"...","subjects":"...","level":"...","goal":"...","notes":"..."},
+ "dates":[{"date":"7/14","what":"...","action":"REMIND 7/13 or empty"}],
+ "constraints":"scheduling constraints, plain text",
+ "teacher":"teacher profile needed, plain text",
+ "questions":["follow-up question 1","..."]}`);
+    intakeDraft=pj(out); intakeDraft._qs=(intakeDraft.questions||[]).map(q=>({t:q,ck:false}));
+    ok('leadStatus',''); renderIntake();
+  }catch(e){ err('leadStatus',e); }
+  b.disabled=false;
+}
+function renderIntake(){
+  const el=document.getElementById('intakeResult');
+  if(!intakeDraft){ el.innerHTML=''; return; }
+  const f=intakeDraft.fields||{};
+  const FIELDS=[['STUDENT',f.student],['PARENT',f.parent],['SOURCE',f.source],['SUBJECT(S)',f.subjects],['CURRENT LEVEL',f.level],['GOAL',f.goal],['NOTES',f.notes]];
+  el.innerHTML=`
+    <div class="dayhead" style="color:var(--accent);margin-top:16px">↓ PARSED · LEAD SUMMARY</div>
+    <div class="card">${FIELDS.map(([l,v])=>`<div class="fieldrow"><span class="fl">${l}</span><span class="fv">${esc(v||'—')}</span></div>`).join('')}</div>
+    ${(intakeDraft.dates||[]).length?`<div class="card" style="margin-top:10px">
+      ${intakeDraft.dates.map(d=>`<div class="daterow"><span class="dd">${esc(d.date)}</span><span class="dw">${esc(d.what)}</span>${d.action?`<span class="da">${esc(d.action)}</span>`:''}</div>`).join('')}</div>`:''}
+    <div class="twocol">
+      <div class="recess"><div class="rl">Scheduling constraints</div>${esc(intakeDraft.constraints||'—')}</div>
+      <div class="recess"><div class="rl">Teacher profile needed</div>${esc(intakeDraft.teacher||'—')}</div>
+    </div>
+    ${intakeDraft._qs.length?`<div class="card" style="margin-top:10px">
+      <div class="rl" style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:4px">Follow-up questions</div>
+      ${intakeDraft._qs.map((q,i)=>`<div class="qrow ${q.ck?'ck':''}" onclick="intakeDraft._qs[${i}].ck=!intakeDraft._qs[${i}].ck;renderIntake()">
+        <span class="qbox">${q.ck?'✓':''}</span><span class="qt">${esc(q.t)}</span></div>`).join('')}</div>`:''}
+    <div class="btnrow" style="margin-top:12px">
+      <button class="btn" onclick="saveIntake()">Save to pipeline</button>
+      <button class="btn grey" onclick="intakeDraft=null;renderIntake()">Discard</button>
+    </div>`;
+}
+function saveIntake(){
+  const d=intakeDraft; if(!d) return;
+  const cardText =
+`STUDENT          ${d.fields?.student||'—'}
+PARENT           ${d.fields?.parent||'—'}
+SOURCE           ${d.fields?.source||'—'}
+SUBJECT(S)       ${d.fields?.subjects||'—'}
+CURRENT LEVEL    ${d.fields?.level||'—'}
+GOAL             ${d.fields?.goal||'—'}
+NOTES            ${d.fields?.notes||'—'}
+
+DATES: ${(d.dates||[]).map(x=>`${x.date} — ${x.what}${x.action?' ['+x.action+']':''}`).join(' · ')||'—'}
+CONSTRAINTS: ${d.constraints||'—'}
+TEACHER PROFILE: ${d.teacher||'—'}
+FOLLOW-UPS: ${(d._qs||[]).map(q=>q.t).join(' · ')||'—'}`;
+  S.leads.unshift({id:Date.now(), name:d.name||'Unnamed lead', meta:d.meta||'', stage:'new', status:'awaiting confirmation', card:cardText, when:todayISO(), flow:{card:false,teacher:false,parent:false,confirm:false}});
+  intakeDraft=null; document.getElementById('leadInput').value='';
+  persist(); renderIntake(); renderKanban();
+  document.querySelector('[data-h="pipeline"]').click();
+}
+
+/* ============ HARLAND · DRAFTS ============ */
+function queueItem(){
+  const el=document.getElementById('qInput'); const t=el.value.trim(); if(!t) return;
+  S.briefQueue.unshift({id:Date.now(), text:t}); el.value=''; persist(); renderDrafts();
+}
+function delQ(id){ S.briefQueue=S.briefQueue.filter(q=>q.id!==id); persist(); renderDrafts(); }
+function delC(id){ S.carryover=S.carryover.filter(c=>c.id!==id); persist(); renderDrafts(); }
+function editCarry(id, el){
+  const c=S.carryover.find(x=>x.id===id); if(!c) return;
+  c.text=el.textContent.trim();
+  if(!c.text){ S.carryover=S.carryover.filter(x=>x.id!==id); }
+  persist(); renderDrafts();
+}
+function renderDrafts(){
+  const sel=document.getElementById('smLead');
+  if(sel){ const cur=sel.value;
+    sel.innerHTML='<option value="">— pick from pipeline (optional) —</option>'+
+      S.leads.map(l=>`<option value="${l.id}">${esc(l.name)}${l.meta?' · '+esc(l.meta):''}</option>`).join('');
+    sel.value=cur; }
+  document.getElementById('qList').innerHTML = S.briefQueue.map(q=>
+    `<div class="qitem"><span class="txt">${esc(q.text)}</span><button class="qx" onclick="delQ(${q.id})">×</button></div>`).join('');
+  document.getElementById('carryBlock').innerHTML = S.carryover.length?
+    `<div class="dayhead" style="margin-top:14px">UNFINISHED · CARRIES INTO NEXT BRIEF — TAP TEXT TO EDIT · × TO DROP</div>`+
+    S.carryover.map(c=>`<div class="qitem"><span class="txt" style="color:var(--amber)" contenteditable="true" spellcheck="false" onblur="editCarry(${c.id},this)">${esc(c.text)}</span><button class="qx" onclick="delC(${c.id})">×</button></div>`).join(''):'';
+  document.querySelectorAll('.md').forEach(x=>x.textContent=md());
+  document.getElementById('draftHist').innerHTML = S.briefs.length? S.briefs.map(b=>`
+    <div class="qitem" style="cursor:pointer" onclick="openSheet('${esc(b.subject)}', S.briefs.find(x=>x.id===${b.id}).text)">
+      <span class="txt mono" style="font-size:10px;letter-spacing:.06em">${esc(b.subject)}</span></div>`).join('')
+    :'<p style="color:var(--faint);font-size:12px">Generated briefings are kept here.</p>';
+}
+const MSG_FORMATS = {
+"NEW LEAD": `Audience: Mr. Harris. INTERNAL — starts with subject line "NEW LEAD // STUDENT NAME GRADE SUBJECT".
+Exact format (fixed-width field labels, pad with spaces):
+NEW LEAD // JOSEPH JUNIOR HSU G7 ENGLISH
+STUDENT          [Name · Grade · school or "school not stated"]
+PARENT           [Names · contact channel or "not stated"]
+SOURCE           [How they found Harland or "not stated"]
+SUBJECT(S)       [Primary subject (starting here) · other interests with stage notes]
+CURRENT LEVEL    [What's known about level]
+GOAL             [Goal, or "not stated — confirm …"]
+NOTES            [Operational notes: naming, timing, anything Mr. Harris should know]
+Unknowns stay visible as "not stated" — never dropped, never invented.`,
+"ASSESSMENT": `Audience: the teacher. INTERNAL — subject line "ASSESSMENT // STUDENT NAME GRADE SUBJECT".
+Exact format:
+ASSESSMENT // JOSEPH JUNIOR HSU G7 ENGLISH
+Hi Mr [Surname],
+We have an assessment opportunity below, may I check if you'll be available for this?
+DATE&TIME: [M/D HH:MM-HH:MM] (tentative schedule)
+[Then the same fixed-width lead card fields: STUDENT / PARENT / SOURCE / SUBJECT(S) / CURRENT LEVEL / GOAL]`,
+"PARENT DIAGNOSTIC": `Audience: the PARENT. EXTERNAL — NO internal subject heading. Bilingual: full Traditional Chinese (台灣用語) block first, then "———" separator, then full English block. Warm, professional, no exclamation overload; ":)" at the zh close is in-voice.
+Structure per block:
+- Greeting by parent's name, "我是 Ruby，很高興今天跟您通上電話。" / "This is Ruby, it was lovely speaking with you today."
+- One short paragraph: every student begins with a diagnostic — it places [Student] at the right level and lets the teacher see strengths and areas to build on before they meet, so the first lesson is designed for them.
+- 【1. 診斷測驗】/ "1. The diagnostic": which diagnostic, ~40 minutes, gentle deadline if given, THE DIAGNOSTIC LINK, "no need to prepare — answer as they normally would; the truer the picture, the better we design the course."
+- 【2. 入學申請表】/ "2. The admission application": covers the assessment class and the admission interview with Mr. Harris; "I've pre-filled most of it from our conversation — please review, complete the rest, and confirm." THE APPLICATION LINK.
+- Close: once both are done the teacher reviews results ahead of time, and Ruby will be in touch to arrange the assessment class and admission interview. 有任何問題都歡迎隨時告訴我:)
+NEVER mention pricing. Links must be copied exactly as given by Ruby — if a link is missing, write [DIAGNOSTIC LINK] / [APPLICATION LINK] and flag it.`,
+"PARENT CONFIRM": `Audience: the PARENT. EXTERNAL — NO internal subject heading. Bilingual: full Traditional Chinese block first, then "———", then English block. Short confirmation:
+- Greeting by name, thank them for completing the steps (if applicable).
+- Confirm the assessment class: date (M/D 星期X), time (24h), teacher, format/location if given.
+- One line on what happens after (teacher will meet [Student]; Ruby follows up afterwards).
+- 若時間需要調整，隨時告訴我 / if the time needs adjusting, just let me know. Warm close.
+NEVER mention pricing. Nothing invented — missing details become [TBC] and get flagged.`,
+"NEW STUDENT": `Audience: the assigned teacher. INTERNAL — one subject line per student: "NEW STUDENT // NAME · COURSE LEVEL" (stack multiple lines if multiple students).
+Exact format:
+NEW STUDENT // BONNIE LIAO · L4 ENGLISH
+Hi Mr. [Surname], good afternoon!
+We would like to assign you as the primary teacher of the below new student(s):
+▍[Name] · [Course + Level]
+Start date: [Day M/D]
+Class time: [Day HH:MM–HH:MM]
+Grade: [Grade]
+School: [School, zh + en gloss if known]
+Parent: [Name(s)]
+(repeat ▍block per student)
+Please let us know if you have any questions before the first class. Thank you!`,
+"SCHEDULE CHANGE": `Audience: the teacher (and Mr. Harris if it affects planning). INTERNAL — subject "SCHEDULE CHANGE // STUDENT NAME · DETAIL". Short: student, old slot → new slot with day M/D and 24h times, reason only if given, one line asking the teacher to confirm the new time~`,
+"TEACHER CHANGE": `Audience: both teachers + Mr. Harris. INTERNAL — subject "TEACHER CHANGE // STUDENT NAME · OLD → NEW". Effective date, neutral reason only if given, one or two lines of what the new teacher should know, thanks to the outgoing teacher~`,
+"SUBSTITUTE CLASS": `Audience: the substitute teacher. INTERNAL — subject "SUBSTITUTE CLASS // DATE RANGE".
+Exact format:
+SUBSTITUTE CLASS // JULY 12TH - 25TH
+Hi Mr. [Surname],
+We have the following sub classes available, may I check if you'll be available?
+[one line per slot, ｜-separated:] M/D｜HH:MM-HH:MM｜Student｜Course
+[Then any scheduling notes — conflicts being removed, adjustments — one line each.]`,
+"ENROLMENT": `Audience: Mr. Harris and/or the teacher. INTERNAL — subject "ENROLMENT // STUDENT NAME · DETAIL". Short confirmation: student confirmed, start date, class arrangement, teacher. If payment needs verifying: "please verify payment was made" — never "confirm receipt of funds".`
+};
+const SM_HINTS = {
+"NEW LEAD":"Details: anything not already in the lead card — Mr. Harris reads this cold.",
+"ASSESSMENT":"Details: teacher surname + proposed DATE&TIME (M/D HH:MM-HH:MM).",
+"PARENT DIAGNOSTIC":"Details: parent name · which diagnostic · paste BOTH links (diagnostic + application) · deadline if any.",
+"PARENT CONFIRM":"Details: confirmed date (M/D), time (24h), teacher, format/location.",
+"NEW STUDENT":"Details: per student — course+level, start date, class time, grade, school, parent.",
+"SCHEDULE CHANGE":"Details: old slot → new slot, day M/D, 24h times, reason if any.",
+"TEACHER CHANGE":"Details: OLD → NEW teacher, effective date, context for the new teacher.",
+"SUBSTITUTE CLASS":"Details: date range + one slot per line: M/D | time | student | course. Any removals/conflicts.",
+"ENROLMENT":"Details: start date, class arrangement, teacher, payment status."
+};
+function smHint(){
+  const t=document.getElementById('smType').value;
+  document.getElementById('smDetail').placeholder=SM_HINTS[t]||'Details…';
+}
+/* Lead workflow: the four-step chain and what's next */
+const FLOW_STEPS=[['card','CARD','NEW LEAD','Send the lead card to Mr. Harris'],
+                  ['teacher','TEACHER','ASSESSMENT','Propose the assessment to a teacher'],
+                  ['parent','PARENT','PARENT DIAGNOSTIC','Send the parent the diagnostic + application'],
+                  ['confirm','CONFIRM','PARENT CONFIRM','Confirm assessment time with the parent']];
+function ensureFlow(l){ if(!l.flow) l.flow={card:false,teacher:false,parent:false,confirm:false}; return l.flow; }
+function nextStep(l){ const f=ensureFlow(l);
+  for(const [k,,type,label] of FLOW_STEPS){ if(!f[k]) return {key:k,type,label}; }
+  return null; }
+function draftNext(id){
+  const l=S.leads.find(x=>x.id===id); if(!l) return;
+  const n=nextStep(l); if(!n) return;
+  document.querySelector('[data-h="drafts"]').click();
+  document.getElementById('smType').value=n.type; smHint();
+  const sel=document.getElementById('smLead'); if(sel) sel.value=String(id);
+  document.getElementById('smDetail').focus();
+}
+function toggleFlow(id,key){ const l=S.leads.find(x=>x.id===id); if(!l) return;
+  ensureFlow(l); l.flow[key]=!l.flow[key]; persist(); renderKanban(); }
+
+async function genStudentMsg(){
+  const type=document.getElementById('smType').value;
+  const leadId=document.getElementById('smLead').value;
+  const who=document.getElementById('smWho').value.trim();
+  const detail=document.getElementById('smDetail').value.trim();
+  const lead=leadId?S.leads.find(l=>l.id==leadId):null;
+  if(!lead && !detail){ err('smStatus', new Error('Pick a lead or give me the details.')); return; }
+  const external=type.startsWith('PARENT');
+  const b=document.getElementById('smBtn'); b.disabled=true; busy('smStatus','Drafting…');
+  try{
+    const out=await ai(`Draft one Harland message. Type: ${type}.
+${external
+? `EXTERNAL parent-facing message: NO internal subject heading. Bilingual — full Traditional Chinese (台灣用語) version first, then a line with "———", then the full English version.`
+: `INTERNAL message: first line is the subject heading in the exact form shown in the format below (all caps, no end punctuation). Body starts on the next line.`}
+
+FORMAT AND CONVENTIONS for this type — follow the structure exactly:
+${MSG_FORMATS[type]}
+
+LEAD CARD: ${lead?JSON.stringify({name:lead.name,meta:lead.meta,card:lead.card}):'(none — use the details only)'}
+RECIPIENT: ${who||'(not specified — use the natural audience for this type)'}
+DETAILS FROM RUBY: ${detail||'(none)'}
+
+Hard rules: never invent teachers, dates, times, links, or facts — unknowns become "TBC" or "[LINK]" and get flagged at the end as "Missing before send: …". Never mention pricing to parents. Dates M/D, times 24h. Copy any links character-for-character.
+
+Respond ONLY with JSON, no fences: {"subject":"short label for the drafts list","message":"the full copy-ready message"}`);
+    const j=pj(out);
+    ok('smStatus',''); document.getElementById('smDetail').value='';
+    if(lead){
+      const step=FLOW_STEPS.find(s=>s[2]===type);
+      if(step){ ensureFlow(lead)[step[0]]=true; }
+    }
+    S.briefs.unshift({id:Date.now(), subject:j.subject, text:j.message, when:todayISO()});
+    S.briefs=S.briefs.slice(0,14); persist(); renderDrafts(); renderKanban();
+    openSheet(j.subject, j.message);
+  }catch(e){ err('smStatus',e); }
+  b.disabled=false;
+}
+
+async function runBrief(kind){
+  busy('briefStatus','Compiling the '+(kind==='morning'?'morning':'end-of-day')+' briefing…');
+  const openLeads=S.leads.filter(l=>l.status!=='marking as lost').slice(0,10)
+    .map(l=>({name:l.name,stage:l.stage,status:l.status,meta:l.meta}));
+  const hNotes=S.notes.filter(n=>n.domain==='harland').slice(0,12);
+  const hEvents=S.events.filter(e=>e.domain==='harland');
+  try{
+    const out=await ai(`Today is ${tpe()}. Compile Ruby's ${kind==='morning'?'MORNING':'END OF DAY'} BRIEFING to Mr. Harris in the exact house format (heading, greeting, · bullets, ->> sub-items).
+
+SECTION RULE — LOCKED: the ONLY allowed sections, in this order, are:
+▍NEEDS YOUR INPUT
+▍ASSESSMENTS
+▍ENROLMENT
+▍INVOICES
+▍ADMIN & OPERATIONS
+▍MARKETING
+▍OTHERS
+Every item must be filed under one of these seven. Omit any section with no items. Never create other section names.
+
+UNFINISHED carried items: ${JSON.stringify(S.carryover)}
+QUEUED items for this brief: ${JSON.stringify(S.briefQueue)}
+HARLAND events: ${JSON.stringify(hEvents)}
+HARLAND notes: ${JSON.stringify(hNotes)}
+PIPELINE: ${JSON.stringify(openLeads)}
+
+Consolidate into one copy-ready message. Nothing invented — unclear items go under ▍NEEDS YOUR INPUT as questions.
+
+Respond ONLY with JSON, no fences:
+{"brief":"full briefing text","unfinished":["still-open item","..."]}`);
+    const j=pj(out);
+    S.carryover=(j.unfinished||[]).map((t,i)=>({id:Date.now()+i,text:t}));
+    S.briefQueue=[];
+    const subject=`ADMIN & SALES // ${kind==='morning'?'MORNING':'END OF DAY'} BRIEFING · ${md()}`;
+    S.briefs.unshift({id:Date.now(), subject, text:j.brief, when:todayISO()});
+    S.briefs=S.briefs.slice(0,14);
+    persist(); ok('briefStatus',''); renderDrafts();
+    openSheet(subject, j.brief);
+  }catch(e){ err('briefStatus',e); }
+}
+
+/* ============ HARLAND · HANDOFF ============ */
+function renderHandoff(){
+  const el=document.getElementById('handoffBody');
+  const end=new Date(); const start=new Date(end.getTime()-6*86400000);
+  const period=`PERIOD · ${start.getMonth()+1}/${start.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;
+  if(!handoffDoc){
+    el.innerHTML=`<div class="empty"><div class="dayhead">${period}</div>
+      <div class="e1" style="margin-top:10px">Compile the period into a handoff any colleague can pick up cold.</div>
+      <div class="btnrow" style="justify-content:center;margin-top:16px"><button class="btn" id="hoBtn" onclick="genHandoff()">Generate handoff</button></div>
+      <div class="status" id="hoStatus"></div></div>`;
+    return;
+  }
+  const secs=[['PENDING PARENT / ENROLMENT FOLLOW-UPS','followups'],['SCHEDULE CHANGES','changes'],['ACTION ITEMS','actions'],['DECISIONS MADE','decisions']];
+  let incomplete=0;
+  el.innerHTML=`<div class="dayhead" style="display:flex;justify-content:space-between"><span>${period}</span>
+    <a href="#" onclick="handoffDoc=null;renderHandoff();return false" class="mono" style="color:var(--faint);font-size:9px;letter-spacing:.14em">REGENERATE</a></div>
+    <div class="card" style="margin-top:8px">`+
+    secs.map(([label,key])=>{
+      const items=handoffDoc[key]||[];
+      let body;
+      if(!items.length) body=`<div class="li" style="color:var(--faint)">None this period.</div>`;
+      else if(key==='actions') body=items.map(a=>{
+        const bad=!a.owner||!a.deadline; if(bad) incomplete++;
+        return `<div class="li ${bad?'bad':''}">· ${esc(a.action)} — ${esc(a.owner||'?')} — ${esc(a.deadline||'?')}${bad?' <span class="mono" style="font-size:9px;border:1px solid var(--amber);border-radius:6px;padding:1px 6px;margin-left:6px">ASSIGN OWNER</span>':''}</div>`;}).join('');
+      else body=items.map(x=>`<div class="li">· ${esc(x)}</div>`).join('');
+      return `<div class="hsec"><div class="hh"><span class="bar"></span><span class="lbl">${label}</span></div>${body}</div>`;
+    }).join('')+`</div>`+
+    (incomplete?`<div class="warnline">⚠︎ ${incomplete} action item${incomplete>1?'s':''} missing owner or deadline — resolve before export.</div>
+      <div class="btnrow"><button class="btn grey" disabled>Export blocked — ${incomplete} item${incomplete>1?'s':''} incomplete</button></div>`
+      :`<div class="btnrow"><button class="btn" onclick="copyHandoff(this)">Export handoff</button></div>`);
+}
+async function genHandoff(){
+  const b=document.getElementById('hoBtn'); if(b)b.disabled=true; busy('hoStatus','Compiling the period…');
+  try{
+    const out=await ai(`Compile Ruby's weekly Harland HANDOFF for a colleague covering with zero context. English. Four fixed sections. Only real items from the data — no invention; if owner or deadline is unknown, leave it null.
+
+Harland notes this period: ${JSON.stringify(S.notes.filter(n=>n.domain==='harland').slice(0,20))}
+Pipeline: ${JSON.stringify(S.leads.map(l=>({name:l.name,stage:l.stage,status:l.status})))}
+Unfinished briefing items: ${JSON.stringify(S.carryover)}
+Recent briefs (subjects): ${JSON.stringify(S.briefs.slice(0,6).map(b=>b.subject))}
+Harland events: ${JSON.stringify(S.events.filter(e=>e.domain==='harland'))}
+
+Respond ONLY with JSON, no fences:
+{"followups":["..."],"changes":["..."],"actions":[{"action":"...","owner":"Mr. Harris or null","deadline":"7/15 or null"}],"decisions":["..."]}`);
+    handoffDoc=pj(out); renderHandoff();
+  }catch(e){ err('hoStatus',e); if(document.getElementById('hoBtn'))document.getElementById('hoBtn').disabled=false; }
+}
+function copyHandoff(btn){
+  const d=handoffDoc; const line=x=>'· '+x;
+  const txt=
+`▍PENDING PARENT / ENROLMENT FOLLOW-UPS
+${(d.followups||[]).map(line).join('\n')||'None this period.'}
+
+▍SCHEDULE CHANGES
+${(d.changes||[]).map(line).join('\n')||'None this period.'}
+
+▍ACTION ITEMS
+${(d.actions||[]).map(a=>`· ${a.action} — ${a.owner} — ${a.deadline}`).join('\n')||'None this period.'}
+
+▍DECISIONS MADE
+${(d.decisions||[]).map(line).join('\n')||'None this period.'}`;
+  navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Exported ✓ · handoff';btn.style.background='var(--green-dk)';btn.style.color='var(--green)';});
+}
+
+/* ============ HEAD TEACHER ESCALATION ============ */
+function addProblem(){
+  const el=document.getElementById('probInput'); const t=el.value.trim(); if(!t) return;
+  S.problems.unshift({id:Date.now(), text:t, type:document.getElementById('probType').value, logged:md(), resolved:false});
+  el.value=''; persist(); renderProblems();
+}
+function delProblem(id){ S.problems=S.problems.filter(p=>p.id!==id); persist(); renderProblems(); }
+function resolveProblem(id){ const p=S.problems.find(p=>p.id===id); if(p){p.resolved=!p.resolved; persist(); renderProblems();} }
+function renderProblems(){
+  const el=document.getElementById('probList');
+  el.innerHTML = S.problems.length? S.problems.map(p=>`
+    <div class="qitem"><span class="mono" style="font-size:9px;color:var(--amber);letter-spacing:.06em;width:64px;flex-shrink:0;padding-top:2px">${esc(p.logged)} · ${esc(p.type.split(' ')[0].toUpperCase())}</span>
+    <span class="txt" style="${p.resolved?'text-decoration:line-through;color:var(--ghost)':''}">${esc(p.text)}</span>
+    <button class="qx" title="mark resolved" onclick="resolveProblem(${p.id})">✓</button>
+    <button class="qx" onclick="delProblem(${p.id})">×</button></div>`).join('')
+    :'<p style="color:var(--faint);font-size:12px;padding:6px 0">Nothing logged. Add problems as they happen — the report writes itself.</p>';
+}
+async function runEscalation(){
+  const open=S.problems.filter(p=>!p.resolved);
+  if(!open.length){ err('escStatus', new Error('Log at least one open problem first.')); return; }
+  const b=document.getElementById('escBtn'); b.disabled=true; busy('escStatus','Compiling the report…');
+  const hNotes=S.notes.filter(n=>n.domain==='harland').slice(0,10);
+  try{
+    const out=await ai(`Compile Ruby's ESCALATION REPORT to the Head Teacher at Harland. This is a dated paper trail of unresolved items awaiting her direction — strictly factual and professional, zero editorializing, zero blame language. Every item keeps its logged date. Firm, neutral, impossible to misread.
+
+Format:
+- Heading: OPERATIONS // HEAD TEACHER · ESCALATION · ${md()}
+- Brief one-line opener (e.g. "Items below are pending your direction; dates show when each was first raised.")
+- Sections, only if they have items: ▍CURRICULUM, ▍OPERATIONS, ▍TEACHER QUESTIONS — AWAITING DIRECTION
+- Each bullet: · [logged M/D] item — current status / what is blocked
+- Close with ▍NEEDS DECISION THIS WEEK: the 1–3 items with real consequence if they slip, stating the concrete impact (student experience, enrolment, teacher scheduling) in one line each.
+
+OPEN PROBLEMS (with logged dates): ${JSON.stringify(open)}
+HARLAND CONTEXT NOTES: ${JSON.stringify(hNotes)}
+
+Nothing invented. Respond ONLY with JSON, no fences: {"report":"the full copy-ready message"}`);
+    const j=pj(out);
+    ok('escStatus','');
+    openSheet('OPERATIONS // HEAD TEACHER · ESCALATION · '+md(), j.report);
+  }catch(e){ err('escStatus',e); }
+  b.disabled=false;
+}
+
+function addDeadline(){
+  const t=document.getElementById('dlTitle').value.trim(); const d=document.getElementById('dlDate').value;
+  if(!t||!d) return;
+  S.deadlines.push({id:Date.now(), title:t, date:d, domain:document.getElementById('dlDomain').value});
+  document.getElementById('dlTitle').value=''; persist(); renderDeadlines();
+}
+function delDl(id){ S.deadlines=S.deadlines.filter(x=>x.id!==id); persist(); renderDeadlines(); }
+function renderDeadlines(){
+  const t=todayISO();
+  const list=S.deadlines.filter(x=>x.date>=t).sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('dlList').innerHTML = list.length? list.map(x=>{
+    const days=Math.round((new Date(x.date)-new Date(t))/86400000);
+    return `<div class="dlrow"><span class="dot d-${x.domain}"></span><span class="dld">${md(x.date)}</span>
+      <span class="dlt">${esc(x.title)}</span>
+      <span class="due ${days<=3?'soon':''}">${days===0?'TODAY':'IN '+days+'D'}</span>
+      <button class="x evrow-x" style="border:none;background:none;color:var(--ghost);cursor:pointer" onclick="delDl(${x.id})">×</button></div>`;
+  }).join(''):'<p style="color:var(--faint);font-size:12px;padding:6px 0">No content deadlines coming up.</p>';
+}
+async function runAudit(){
+  const el=document.getElementById('auditInput'); const raw=el.value.trim();
+  if(!raw){ err('auditStatus',new Error('Paste this week\u2019s numbers first.')); return; }
+  const b=document.getElementById('auditBtn'); b.disabled=true; busy('auditStatus','Auditing @'+acct+'…');
+  const prior=S.audits.filter(a=>a.acct===acct).slice(0,2);
+  try{
+    const out=await ai(`Run Ruby's weekly Instagram audit for @${acct}. Grade against THAT account's job in the house rules. Saves & shares over vanity metrics. Blunt and useful.
+
+THIS WEEK'S DATA:
+${raw}
+
+PRIOR AUDITS (trend): ${JSON.stringify(prior.map(p=>({week:p.when,text:p.text.slice(0,350)})))}
+
+Plain text, short paragraphs, under 200 words: what worked, what drifted, one clear priority for next week.`);
+    S.audits.unshift({id:Date.now(), acct, text:out, when:md()}); S.audits=S.audits.slice(0,24);
+    el.value=''; persist(); ok('auditStatus',''); renderAudits();
+    openSheet('WEEKLY AUDIT // @'+acct.toUpperCase()+' · '+md(), out);
+  }catch(e){ err('auditStatus',e); }
+  b.disabled=false;
+}
+function renderAudits(){
+  document.getElementById('auditHist').innerHTML = S.audits.length? S.audits.slice(0,8).map(a=>`
+    <div class="qitem" style="cursor:pointer" onclick="openSheet('WEEKLY AUDIT // @${a.acct.toUpperCase()} · ${a.when}', S.audits.find(x=>x.id===${a.id}).text)">
+    <span class="txt mono" style="font-size:10px;letter-spacing:.06em">@${a.acct} · ${a.when}</span></div>`).join(''):'';
+}
+async function askTrainer(){
+  const el=document.getElementById('trainInput'); const q=el.value.trim(); if(!q) return;
+  const b=document.getElementById('trainBtn'); b.disabled=true; busy('trainStatus','Researching…');
+  try{
+    const out=await ai(`You are the research desk for Ruby, who trains Leilah, a border collie in Taipei. Answer with the theory and reasoning behind the recommendation, not just the "what". Ground answers in Ruby's own resources first, then search the web if current sources help. Practical, under 250 words.
+
+RUBY'S RESOURCES: ${S.leilahResources||'(none provided)'}
+
+QUESTION: ${q}`, true);
+    ok('trainStatus',''); el.value='';
+    openSheet('TRAINER // LEILAH · '+md(), out);
+  }catch(e){ err('trainStatus',e); }
+  b.disabled=false;
+}
+
+/* ============ SCHEDULE ENGINE (due banners) ============ */
+function tpeNow(){ const f=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Taipei',weekday:'short',hour:'numeric',hour12:false});
+  const p=Object.fromEntries(f.formatToParts(new Date()).map(x=>[x.type,x.value]));
+  return {day:p.weekday, hour:parseInt(p.hour)}; }
+function briefDoneToday(kind){ return S.briefs.some(b=>b.when===todayISO() && b.subject.includes(kind==='morning'?'MORNING':'END OF DAY')); }
+function renderDue(){
+  const el=document.getElementById('dueBanner'); if(!el) return;
+  const {day,hour}=tpeNow(); const workday=day!=='Sun';
+  const due=[];
+  if(workday && hour>=9 && !briefDoneToday('morning'))
+    due.push(['Morning briefing due (9:00)', "document.querySelector('[data-v=harland]').click();document.querySelector('[data-h=drafts]').click();runBrief('morning')"]);
+  if(workday && hour>=18 && !briefDoneToday('eod'))
+    due.push(['EOD briefing due (18:00)', "document.querySelector('[data-v=harland]').click();document.querySelector('[data-h=drafts]').click();runBrief('eod')"]);
+  if(day==='Sun' && hour>=9 && S.lastWeekAhead!==todayISO())
+    due.push(['Sunday week-ahead due (9:00)', 'runWeekAhead()']);
+  el.innerHTML = due.length? `<div class="card" style="border-color:rgba(224,168,92,.4);margin-top:12px">
+    <div class="kick" style="color:var(--amber)">ON THE CLOCK</div>`+
+    due.map(([label,fn])=>`<div class="qitem" style="border:none;padding:6px 0"><span class="txt" style="color:var(--t2)">${label}</span>
+      <button class="btn grey" style="padding:6px 12px;font-size:11px" onclick="${fn}">Run</button></div>`).join('')+
+    `<div class="status" id="weekStatus"></div></div>` : '<div class="status" id="weekStatus" style="margin:0"></div>';
+}
+async function runWeekAhead(){
+  busy('weekStatus','Reading next week…');
+  const t=todayISO(); const end=new Date(new Date(t).getTime()+7*86400000).toISOString().slice(0,10);
+  const week=S.events.filter(e=>e.date&&e.date>=t&&e.date<=end);
+  const dls=S.deadlines.filter(d=>d.date>=t&&d.date<=end);
+  try{
+    const out=await ai(`Today is Sunday ${md()}. Produce Ruby's WEEK AHEAD rundown for the next 7 days across all four worlds (personal / leilah / jibboco / harland).
+
+EVENTS: ${JSON.stringify(week)}
+CONTENT DEADLINES: ${JSON.stringify(dls)}
+OPEN NOTES: ${JSON.stringify(S.notes.slice(0,20))}
+UNFINISHED HARLAND: ${JSON.stringify(S.carryover)}
+
+Format, plain text:
+- Day-by-day rundown Mon→Sun: each day's items, one line each, 24h times.
+- Mark items needing attention with ⚑ and say why in a few words. The single top priority of the week gets ⚑⚑.
+- Then ▍TASK GUIDANCE: for each vague or underspecified task (especially JibboCo items like "set up back end"), break down what it actually means and requires — concrete substeps, decisions to make, anything to prepare or ask for. Be specific, not generic.
+- Close with ▍WATCH: 1–3 things that could slip.
+Nothing invented — if a task is too vague even to decompose, say what's missing.`);
+    S.lastWeekAhead=todayISO();
+    S.briefs.unshift({id:Date.now(), subject:'WEEK AHEAD // '+md(t)+'–'+md(end), text:out, when:todayISO()});
+    S.briefs=S.briefs.slice(0,14);
+    persist(); ok('weekStatus',''); renderDue(); renderDrafts();
+    openSheet('WEEK AHEAD // '+md(t)+'–'+md(end), out);
+  }catch(e){ err('weekStatus',e); }
+}
+
+/* ============ LEILAH TRAINING ============ */
+function saveLeilah(){
+  S.leilahResources=document.getElementById('llRes').value;
+  S.leilahPlan=document.getElementById('llPlan').value;
+  persist(); ok('llStatus','Saved.');
+}
+async function briefTrainingWeek(){
+  if(!(S.leilahPlan||'').trim()){ err('llStatus', new Error('Paste this week\u2019s training plan first (from your calendar).')); return; }
+  const b=document.getElementById('llBtn'); b.disabled=true; busy('llStatus','Working through the week…');
+  try{
+    const out=await ai(`Brief Ruby on her border collie Leilah's training week. For EACH day in the plan: the key points of that day's focus, the measurables (what "done well" looks like, counts/durations/criteria), and the theory & research behind why this supports the training — cite the concept or researcher by name where real ones exist. Search the web where current sources genuinely help. Ground everything in Ruby's own resources first.
+
+RUBY'S RESOURCES (authoritative first reference):
+${S.leilahResources||'(none provided)'}
+
+THIS WEEK'S PLAN (from her calendar):
+${S.leilahPlan}
+
+Plain text, day by day. Practical over academic. Under 450 words.`, true);
+    ok('llStatus','');
+    S.briefs.unshift({id:Date.now(), subject:'TRAINING WEEK // LEILAH · '+md(), text:out, when:todayISO()});
+    S.briefs=S.briefs.slice(0,14); persist(); renderDrafts();
+    openSheet('TRAINING WEEK // LEILAH · '+md(), out);
+  }catch(e){ err('llStatus',e); }
+  b.disabled=false;
+}
+
+/* ============ BACKEND SYNC (Google Sheet) ============ */
+function backendRows(){
+  const rows=[];
+  const push=(type,name,st,domain,content)=>rows.push([new Date().toISOString(),type,name||'',st||'',domain||'',(content||'').toString().slice(0,4000)]);
+  S.leads.forEach(l=>push('lead',l.name,l.stage+' / '+l.status,'harland',l.card));
+  S.problems.forEach(p=>push('problem',p.type,p.resolved?'resolved':'open','harland','['+p.logged+'] '+p.text));
+  S.briefs.forEach(b=>push('draft',b.subject,b.when,'harland',b.text));
+  S.deadlines.forEach(d=>push('deadline',d.title,d.date,d.domain,''));
+  S.events.forEach(e=>push('event',e.title,(e.date||'unscheduled')+(e.time?' '+e.time:''),e.domain,''));
+  S.notes.forEach(n=>push('note','', n.uncertain?'uncertain':'', n.domain, n.text));
+  return rows;
+}
+async function syncBackend(){
+  if(!S.syncUrl){ err('syncStatus', new Error('No sync URL set — paste your Apps Script URL above and save.')); return; }
+  busy('syncStatus','Syncing…');
+  try{
+    await fetch(S.syncUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({rows:backendRows()})});
+    ok('syncStatus','Sent '+backendRows().length+' rows to the sheet. (Rows append; the sheet keeps history.)');
+  }catch(e){ err('syncStatus', new Error('Sync failed — check the URL and that the script is deployed as a web app.')); }
+}
+function copyBackup(){
+  const csv=['timestamp,record_type,name_or_title,stage_or_status,domain,content']
+    .concat(backendRows().map(r=>r.map(c=>'"'+(c+'').replace(/"/g,'""').replace(/\n/g,' \u21b5 ')+'"').join(','))).join('\n');
+  navigator.clipboard.writeText(csv).then(()=>ok('syncStatus','Backup copied as CSV — paste into the sheet (Data will split into columns).'));
+}
+
+/* ============ SHEET ============ */
+let sheetText='';
+function openSheet(title, body){
+  sheetText=body;
+  document.getElementById('sheetTitle').textContent=title;
+  document.getElementById('sheetBody').value=body;
+  document.getElementById('scrim').classList.add('on');
+  document.getElementById('bsheet').classList.add('on');
+}
+function closeSheet(){ document.getElementById('scrim').classList.remove('on'); document.getElementById('bsheet').classList.remove('on'); }
+function copySheet(){ navigator.clipboard.writeText(sheetText).then(()=>{
+  const b=document.getElementById('sheetCopy'); b.textContent='Copied ✓'; setTimeout(()=>b.textContent='Copy message',1500); }); }
+
+/* ============ RULES ============ */
+function saveBrandLinks(){
+  S.brandLinks={
+    yuanyuan_ruby: document.getElementById('lnkRuby').value.trim()||BRAND_SHEET,
+    leilei_leilah: document.getElementById('lnkLeilah').value.trim()||BRAND_SHEET,
+    jibboco: document.getElementById('lnkJibbo').value.trim()||BRAND_SHEET,
+    deadlines: document.getElementById('lnkDl').value.trim()||BRAND_SHEET };
+  persist(); updateBrandLinks(); ok('lnkStatus','Tab links saved.');
+}
+function saveRules(){
+  S.rules=document.getElementById('rulesInput').value;
+  S.apiKey=document.getElementById('apiKeyInput').value.trim()||null;
+  persist(); ok('rulesStatus','Saved. Every run reads these.');
+}
+async function resetAll(){
+  if(!confirm('This wipes everything stored in the app — events, notes, leads, briefs, audits. Continue?')) return;
+  S={events:[],notes:[],leads:[],briefQueue:[],carryover:[],briefs:[],deadlines:[],audits:[],problems:[],top3:null,rules:DEFAULT_RULES};
+  handoffDoc=null; intakeDraft=null; await persist(); renderAll();
+}
+
+/* ============ BOOT ============ */
+function renderAll(){
+  document.getElementById('dateline').textContent=tpe();
+  document.getElementById('rulesInput').value=S.rules;
+  document.getElementById('apiKeyInput').value=S.apiKey||'';
+  document.getElementById('syncUrlInput').value=S.syncUrl||'';
+  document.getElementById('llPlan').value=S.leilahPlan||'';
+  document.getElementById('llRes').value=S.leilahResources||'';
+  document.getElementById('evDate').value=todayISO();
+  const bl=S.brandLinks||{};
+  document.getElementById('lnkRuby').value=bl.yuanyuan_ruby===BRAND_SHEET?'':(bl.yuanyuan_ruby||'');
+  document.getElementById('lnkLeilah').value=bl.leilei_leilah===BRAND_SHEET?'':(bl.leilei_leilah||'');
+  document.getElementById('lnkJibbo').value=bl.jibboco===BRAND_SHEET?'':(bl.jibboco||'');
+  document.getElementById('lnkDl').value=bl.deadlines===BRAND_SHEET?'':(bl.deadlines||'');
+  updateBrandLinks();
+  renderDue();
+  renderFilters(); renderToday(); renderCapture(); renderKanban(); renderDrafts(); renderHandoff(); renderProblems(); renderDeadlines(); renderAudits(); smHint();
+}
+loadState();
+setInterval(()=>{document.getElementById('dateline').textContent=tpe(); renderDue();},60000);
+</script>
+</body>
+</html>
