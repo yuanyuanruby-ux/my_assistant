@@ -398,11 +398,15 @@ select{background:var(--recess);border:1px solid var(--outline);border-radius:7p
     <div class="secbar"><span class="bar" style="background:var(--c-jibboco)"></span><span class="lbl">Backend · Google Sheet</span></div>
     <p style="font-size:12px;color:var(--mut);margin-bottom:8px">Your backend sheet is "Ruby Assistant — Backend" in Google Drive. Two ways to get data there: paste your Apps Script URL for one-tap sync, or Copy backup and paste into the sheet manually.</p>
     <input type="text" id="syncUrlInput" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:11px">
+    <input type="text" id="syncPassInput" placeholder="sync passphrase — must match PASS in your Apps Script" autocomplete="off" spellcheck="false" style="font-family:var(--mono);font-size:11px;margin-top:6px">
     <div class="btnrow">
-      <button class="btn grey" onclick="S.syncUrl=document.getElementById('syncUrlInput').value.trim()||null;persist();ok('syncStatus','Sync URL saved.')">Save URL</button>
-      <button class="btn" onclick="syncBackend()">Sync to sheet</button>
-      <button class="btn ghost" onclick="copyBackup()">Copy backup (CSV)</button>
+      <button class="btn grey" onclick="S.syncUrl=document.getElementById('syncUrlInput').value.trim()||null;S.syncPass=document.getElementById('syncPassInput').value.trim()||null;persist();ok('syncStatus','Sync settings saved.')">Save</button>
+      <button class="btn" onclick="pushState()">Push ↑</button>
+      <button class="btn" onclick="pullState()">Pull ↓</button>
+      <button class="btn grey" onclick="syncBackend()">Rows → sheet</button>
+      <button class="btn ghost" onclick="copyBackup()">Copy backup</button>
     </div>
+    <p style="font-size:11px;color:var(--faint);margin-top:6px">Push after working on one device; Pull on the other. API key never syncs — set it once per device.</p>
     <div class="status" id="syncStatus"></div>
 
     <div class="secbar"><span class="bar" style="background:var(--outline)"></span><span class="lbl">API key · standalone mode only</span></div>
@@ -1226,12 +1230,44 @@ function backendRows(){
 }
 async function syncBackend(){
   if(!S.syncUrl){ err('syncStatus', new Error('No sync URL set — paste your Apps Script URL above and save.')); return; }
-  busy('syncStatus','Syncing…');
+  busy('syncStatus','Syncing rows…');
   try{
     await fetch(S.syncUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({rows:backendRows()})});
+      body:JSON.stringify({pass:S.syncPass||'', rows:backendRows()})});
     ok('syncStatus','Sent '+backendRows().length+' rows to the sheet. (Rows append; the sheet keeps history.)');
   }catch(e){ err('syncStatus', new Error('Sync failed — check the URL and that the script is deployed as a web app.')); }
+}
+function syncableState(){
+  const copy=Object.assign({},S);
+  delete copy.apiKey; delete copy.syncUrl; delete copy.syncPass; // device-local secrets never sync
+  return JSON.stringify(copy);
+}
+async function pushState(){
+  if(!S.syncUrl||!S.syncPass){ err('syncStatus', new Error('Push needs both the Apps Script URL and a passphrase — set them above.')); return; }
+  busy('syncStatus','Pushing state…');
+  try{
+    const res=await fetch(S.syncUrl,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({pass:S.syncPass, state:syncableState()})});
+    const t=await res.text();
+    if(t.trim()==='saved') ok('syncStatus','Pushed. Open the app on the other device and tap Pull.');
+    else if(t.trim()==='denied') err('syncStatus', new Error('Passphrase rejected — it must match the PASS in your Apps Script.'));
+    else ok('syncStatus','Pushed (script replied: '+t.slice(0,60)+')');
+  }catch(e){ err('syncStatus', new Error('Push failed — check the script is deployed with access "Anyone" and the URL ends in /exec.')); }
+}
+async function pullState(){
+  if(!S.syncUrl||!S.syncPass){ err('syncStatus', new Error('Pull needs both the Apps Script URL and a passphrase — set them above.')); return; }
+  if(!confirm('Pull will replace this device\u2019s app data with the last pushed state. Continue?')) return;
+  busy('syncStatus','Pulling state…');
+  try{
+    const res=await fetch(S.syncUrl+'?pass='+encodeURIComponent(S.syncPass));
+    const t=(await res.text()).trim();
+    if(t==='denied'){ err('syncStatus', new Error('Passphrase rejected — it must match the PASS in your Apps Script.')); return; }
+    const incoming=JSON.parse(t);
+    const keep={apiKey:S.apiKey, syncUrl:S.syncUrl, syncPass:S.syncPass};
+    S=Object.assign({}, S, incoming, keep);
+    await persist(); renderAll();
+    ok('syncStatus','Pulled — this device now matches the last push.');
+  }catch(e){ err('syncStatus', new Error('Pull failed — nothing pushed yet, or the script needs the v2 code.')); }
 }
 function copyBackup(){
   const csv=['timestamp,record_type,name_or_title,stage_or_status,domain,content']
@@ -1278,6 +1314,7 @@ function renderAll(){
   document.getElementById('rulesInput').value=S.rules;
   document.getElementById('apiKeyInput').value=S.apiKey||'';
   document.getElementById('syncUrlInput').value=S.syncUrl||'';
+  document.getElementById('syncPassInput').value=S.syncPass||'';
   document.getElementById('llPlan').value=S.leilahPlan||'';
   document.getElementById('llRes').value=S.leilahResources||'';
   document.getElementById('evDate').value=todayISO();
